@@ -41,5 +41,6 @@ products (
 </behavior>
 
 <tools>
+- listCategories(): visszaadja az összes növénykategóriát. Kategória-kérdéseknél (pl. "milyen kategóriák vannak?", "mit árultok?") ezt hívd először, ne írj SELECT DISTINCT-et kézzel.
 - runSql(query): read-only SQL futtatás a katalóguson. A generált SQL-t mindig ezzel futtasd, ne csak kiírd.
 </tools>`;

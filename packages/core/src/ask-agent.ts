@@ -2,6 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { SYSTEM_PROMPT } from './schema-context.js';
 import { runSql } from './run-sql.js';
+import { listCategories } from './list-categories.js';
 import { Logger } from './logger.js';
 
 const MODEL = 'claude-sonnet-4-6';
@@ -9,6 +10,17 @@ const MODEL = 'claude-sonnet-4-6';
 const client = new Anthropic();
 
 const RunSqlInput = z.object({ query: z.string().min(1) });
+
+const LIST_CATEGORIES_TOOL: Anthropic.Tool = {
+  name: 'listCategories',
+  description:
+    'Visszaadja az összes elérhető növénykategóriát a katalógusból. Kategória-kérdéseknél ezt használd.',
+  input_schema: {
+    type: 'object',
+    properties: {},
+    required: [],
+  },
+};
 
 const RUN_SQL_TOOL: Anthropic.Tool = {
   name: 'runSql',
@@ -55,7 +67,7 @@ export async function askAgent(
       model: MODEL,
       max_tokens: 4096,
       system: SYSTEM_PROMPT,
-      tools: [RUN_SQL_TOOL],
+      tools: [LIST_CATEGORIES_TOOL, RUN_SQL_TOOL],
       messages,
     });
 
@@ -85,6 +97,30 @@ export async function askAgent(
         if (block.type !== 'tool_use') continue;
 
         const toolBlock = block as Anthropic.ToolUseBlock;
+
+        if (toolBlock.name === 'listCategories') {
+          logger.log({ type: 'tool_call', id: toolBlock.id, tool: 'listCategories' });
+          try {
+            const categories = await listCategories();
+            logger.log({ type: 'tool_result', id: toolBlock.id, count: categories.length });
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: toolBlock.id,
+              content: JSON.stringify(categories),
+            });
+          } catch (err) {
+            const errMsg = err instanceof Error ? err.message : String(err);
+            logger.log({ type: 'tool_error', id: toolBlock.id, error: errMsg });
+            toolResults.push({
+              type: 'tool_result',
+              tool_use_id: toolBlock.id,
+              content: errMsg,
+              is_error: true,
+            });
+          }
+          continue;
+        }
+
         const parsed = RunSqlInput.safeParse(toolBlock.input);
 
         if (!parsed.success) {

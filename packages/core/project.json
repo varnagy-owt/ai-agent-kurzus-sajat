@@ -4,5 +4,12 @@
   "projectType": "library",
   "root": "packages/core",
   "sourceRoot": "packages/core/src",
-  "targets": {}
+  "targets": {
+    "test": {
+      "command": "pnpm exec vitest run",
+      "options": {
+        "cwd": "packages/core"
+      }
+    }
+  }
 }
