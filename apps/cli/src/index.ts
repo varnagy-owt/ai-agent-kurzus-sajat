@@ -1,3 +1,4 @@
+import readline from 'node:readline';
 import { Command } from 'commander';
 
 const program = new Command();
@@ -11,8 +12,28 @@ program
   .command('ask [question]')
   .description('Kérdés a növénykatalógusnak')
   .option('--show-prompt', 'Kiírja a teljes üzenettömböt')
-  .action(() => {
-    console.log('(coming soon)');
+  .action((question: string | undefined) => {
+    if (question) {
+      console.log(question);
+      return;
+    }
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    const prompt = () =>
+      rl.question('> ', (line) => {
+        if (line.trim() === 'exit') {
+          rl.close();
+          return;
+        }
+        console.log(line);
+        prompt();
+      });
+
+    prompt();
   });
 
 program.parse();
