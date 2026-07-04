@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import readline from 'node:readline';
 import { Command } from 'commander';
-import { sendMessage } from '@plantbase/core';
+import { askAgent } from '@plantbase/core';
 
 const program = new Command();
 
@@ -10,9 +10,12 @@ program
   .description('Plantbase AI agent — növénykatalógus természetes nyelven')
   .version('0.1.0');
 
-async function ask(question: string): Promise<void> {
+async function ask(
+  question: string,
+  opts: { showPrompt?: boolean },
+): Promise<void> {
   try {
-    const answer = await sendMessage(question);
+    const answer = await askAgent(question, opts);
     console.log(answer);
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -23,10 +26,10 @@ async function ask(question: string): Promise<void> {
 program
   .command('ask [question]')
   .description('Kérdés a növénykatalógusnak')
-  .option('--show-prompt', 'Kiírja a teljes üzenettömböt')
-  .action(async (question: string | undefined) => {
+  .option('--show-prompt', 'Kiírja a teljes üzenettömböt minden LLM-hívás előtt')
+  .action(async (question: string | undefined, opts: { showPrompt?: boolean }) => {
     if (question) {
-      await ask(question);
+      await ask(question, opts);
       return;
     }
 
@@ -43,7 +46,7 @@ program
           return;
         }
         if (trimmed) {
-          await ask(trimmed);
+          await ask(trimmed, opts);
         }
         prompt();
       });
