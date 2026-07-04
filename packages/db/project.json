@@ -1,0 +1,25 @@
+{
+  "name": "db",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "root": "packages/db",
+  "sourceRoot": "packages/db/src",
+  "targets": {
+    "generate": {
+      "command": "pnpm exec prisma generate --schema=packages/db/prisma/schema.prisma",
+      "options": { "cwd": "{workspaceRoot}" }
+    },
+    "migrate": {
+      "command": "pnpm exec prisma migrate dev --schema=packages/db/prisma/schema.prisma",
+      "options": { "cwd": "{workspaceRoot}" }
+    },
+    "seed": {
+      "command": "tsx packages/db/prisma/seed.ts",
+      "options": { "cwd": "{workspaceRoot}" }
+    },
+    "grant-readonly": {
+      "command": "tsx packages/db/scripts/grant-readonly.ts",
+      "options": { "cwd": "{workspaceRoot}" }
+    }
+  }
+}

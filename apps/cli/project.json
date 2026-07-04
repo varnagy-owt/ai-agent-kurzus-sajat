@@ -1,0 +1,13 @@
+{
+  "name": "cli",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "root": "apps/cli",
+  "sourceRoot": "apps/cli/src",
+  "targets": {
+    "start": {
+      "command": "tsx apps/cli/src/index.ts",
+      "options": { "cwd": "{workspaceRoot}" }
+    }
+  }
+}
