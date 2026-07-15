@@ -7,6 +7,10 @@ import { Logger } from './logger.js';
 
 const MODEL = 'claude-sonnet-4-6';
 
+// Circuit breaker: felső korlát a tool-use körökre, hogy egy elakadt
+// (végtelen tool-kérést generáló) beszélgetés ne pörögjön korlátlanul.
+const MAX_STEPS = 8;
+
 const client = new Anthropic();
 
 const RunSqlInput = z.object({ query: z.string().min(1) });
@@ -54,7 +58,16 @@ export async function askAgent(
 
   logger.log({ type: 'user', content: question });
 
+  let steps = 0;
+
   for (;;) {
+    if (steps >= MAX_STEPS) {
+      logger.log({ type: 'max_steps_reached', steps, limit: MAX_STEPS });
+      logger.flush();
+      return `Túl sok lépés kellett (elértem a ${MAX_STEPS} kör korlátot), ezért biztonsági okból leálltam. Kérlek, próbáld meg egyszerűbb vagy konkrétabb kérdéssel.`;
+    }
+    steps++;
+
     if (opts.showPrompt) {
       console.log('\n─── System prompt ───');
       console.log(SYSTEM_PROMPT);

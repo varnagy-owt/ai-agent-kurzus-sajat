@@ -12,9 +12,22 @@ function getPool(): Pool {
 }
 
 export async function runSql(query: string): Promise<unknown[]> {
-  if (!/^\s*SELECT\b/i.test(query.trim())) {
+  const trimmed = query.trim();
+
+  // Egyetlen opcionális záró pontosvesszőt megengedünk.
+  const withoutTrailingSemicolon = trimmed.replace(/;\s*$/, '');
+
+  // Ha a záró ; levágása után is marad pontosvessző, az több utasítás lenne
+  // (pl. "SELECT 1; DROP TABLE ..."), ezért elutasítjuk. A read-only DB-role
+  // a végső védelem; ez egy második, kód-szintű réteg.
+  if (withoutTrailingSemicolon.includes(';')) {
+    throw new Error('Csak egyetlen utasítás engedélyezett (több SQL utasítás tiltott).');
+  }
+
+  if (!/^\s*SELECT\b/i.test(withoutTrailingSemicolon)) {
     throw new Error('Csak SELECT lekérdezés engedélyezett.');
   }
+
   const result = await getPool().query(query);
   return result.rows;
 }

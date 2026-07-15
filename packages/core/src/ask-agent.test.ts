@@ -115,6 +115,21 @@ describe('askAgent', () => {
     expect(t1ErrorResult?.content).toContain('column "color" does not exist');
   });
 
+  it('stops safely with a message when MAX_STEPS is reached', async () => {
+    // Az LLM minden körben újabb tool-hívást kér — sosem ér el end_turn-t.
+    mockRunSql.mockResolvedValue([{ id: 1 }]);
+    mockCreate.mockResolvedValue(
+      toolUseResponse('loop', 'runSql', { query: 'SELECT 1' }),
+    );
+
+    const result = await askAgent('Végtelen kör kérdés');
+
+    // A circuit breaker leáll, érthető üzenetet ad vissza.
+    expect(result).toContain('Túl sok lépés kellett');
+    // Legfeljebb MAX_STEPS (8) LLM-hívás történt, nem korlátlan.
+    expect(mockCreate).toHaveBeenCalledTimes(8);
+  });
+
   it('runs listCategories and returns answer after tool_use', async () => {
     mockListCategories.mockResolvedValueOnce(['kaktusz', 'pozsgás', 'szobanövény']);
     mockCreate
